@@ -19,6 +19,8 @@ func main() {
 	db.ConnectToDB()
 	db.AutoMigrate()
 
-  dataExtSvc := services.NewDataExtracter()
-  dataExtSvc.GetAndSaveQuickStats("ya29.a0AXooCgvq1Cdnnmu8xFRcaY0VuJwFeISw-JYxvRhCBxE5hYsvzGb0-vPC9GizN0XghCJEdRPADz80yofSjwG6fv6ZdpNZdFlwfa5ETXi7zfLem6hzEl2J2Xkgh0nSJdA0ptfN1mLUX6Yhs-45DlOcSS0ktpCz6q9dDMrzaCgYKAUwSARMSFQHGX2MiHvfc2MAB9BEj1TmaFtI3Zw0171", "420272748")
+
+  statsDB := db.NewStatsDB()
+  dataExtSvc := services.NewDataExtracter(statsDB)
+  dataExtSvc.GetAndSaveQuickStats("ya29.a0AXooCgtOArZ0nJYwAH3trjOG3h1M4c_TiPpoiegqt-_TVEi72riZeky5qlYyWAq7MzjetIRMeSPvOxXeVaCap7OVnj_VI7nqAGPpEApLc0TI-brFvbLW3Pnjj2-dz4WCGnUQM0AwfBPbr1A36u2nUwRw0xYDJwrZ27znaCgYKAQ8SARMSFQHGX2Miy5iXvxwY5x8Loha8KfAFag0171", "420272748")
 }

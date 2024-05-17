@@ -7,7 +7,7 @@ package services
 
 import (
 	"encoding/json"
-	"fmt"
+	"metric-minder-engine/db"
 	cErrors "metric-minder-engine/errors"
 	httpClient "metric-minder-engine/http"
 	"metric-minder-engine/models"
@@ -21,10 +21,14 @@ import (
 
 const BASE_URL = "https://analyticsdata.googleapis.com/v1beta/properties"
 
-type DataExtracter struct{}
+type DataExtracter struct {
+	statsDb db.StatsDB
+}
 
-func NewDataExtracter() DataExtracter {
-	return DataExtracter{}
+func NewDataExtracter(db db.StatsDB) DataExtracter {
+	return DataExtracter{
+		statsDb: db,
+	}
 }
 
 func (de DataExtracter) GetAndSaveQuickStats(accessToken, propertyID string) error {
@@ -35,17 +39,17 @@ func (de DataExtracter) GetAndSaveQuickStats(accessToken, propertyID string) err
 		return cErrors.NewError("access token invalid")
 	}
 
-  today := tSplit[0]
+	today := tSplit[0]
 
 	apiEndpoint := BASE_URL + "/" + propertyID + ":runReport"
-	
-  h := map[string]string{
+
+	h := map[string]string{
 		"Authorization": "Bearer " + accessToken,
 		"Accept":        "application/json",
 		"Content-Type":  "application/json",
 	}
 
-  requestBody := map[string]interface{}{
+	requestBody := map[string]interface{}{
 		"metrics": []map[string]string{
 			{"name": "newUsers"},
 			{"name": "screenPageViews"},
@@ -56,77 +60,76 @@ func (de DataExtracter) GetAndSaveQuickStats(accessToken, propertyID string) err
 		"dateRanges": []map[string]string{
 			{
 				"startDate": today,
-			  "endDate" : today,
-      },
+				"endDate":   today,
+			},
 		},
 		"keepEmptyRows": true,
 	}
 
+	bytes, err := httpClient.HTTPRequest(http.MethodPost, apiEndpoint, requestBody, nil, h)
+	if err != nil {
+		log.Error().Msg("Error: " + err.Error())
+	}
 
-  bytes, err := httpClient.HTTPRequest(http.MethodPost, apiEndpoint, requestBody, nil, h)
-  if err != nil {
-    log.Error().Msg("Error: " + err.Error())
-  }
-  
-  resp := models.GAResp{}
+	resp := models.GAResp{}
 
-  err = json.Unmarshal(bytes, &resp)
-  if err != nil {
-    log.Error().Msg("Error: " +  err.Error())
-  }
+	err = json.Unmarshal(bytes, &resp)
+	if err != nil {
+		log.Error().Msg("Error: " + err.Error())
+	}
 
-  stats := models.QuickStats{}
+	stats := models.QuickStats{}
 
-  nV := resp.Rows[0].MetricValues[0].Value
-  newVisitors, err := strconv.Atoi(nV)
-  if err != nil {
-    log.Error().Msg("Error: " + err.Error())
-    return err
-  }
+	nV := resp.Rows[0].MetricValues[0].Value
+	newVisitors, err := strconv.Atoi(nV)
+	if err != nil {
+		log.Error().Msg("Error: " + err.Error())
+		return err
+	}
 
-  stats.NewVisitors = newVisitors
-  
-  pV := resp.Rows[0].MetricValues[1].Value
-  pageViews, err := strconv.Atoi(pV)
-  if err != nil {
-    log.Error().Msg("Error: " + err.Error())
-    return err
-  }
+	stats.NewVisitors = newVisitors
 
-  stats.PageViews = pageViews
+	pV := resp.Rows[0].MetricValues[1].Value
+	pageViews, err := strconv.Atoi(pV)
+	if err != nil {
+		log.Error().Msg("Error: " + err.Error())
+		return err
+	}
 
-  // Pages Per Visit
-  ppV := resp.Rows[0].MetricValues[2].Value
-  pagesPerVisit, err := strconv.ParseFloat(ppV, 64)
-  if err != nil {
-    log.Error().Msg("Error: " + err.Error())
-    return err
-  }
+	stats.PageViews = pageViews
 
-  stats.PagesPerVisit = pagesPerVisit
-  
+	// Pages Per Visit
+	ppV := resp.Rows[0].MetricValues[2].Value
+	pagesPerVisit, err := strconv.ParseFloat(ppV, 64)
+	if err != nil {
+		log.Error().Msg("Error: " + err.Error())
+		return err
+	}
 
-  tV := resp.Rows[0].MetricValues[3].Value
-  totalVisits, err := strconv.Atoi(tV)
-  if err != nil {
-    log.Error().Msg("Error: " + err.Error())
-    return err
-  }
+	stats.PagesPerVisit = pagesPerVisit
 
-  stats.TotalVisits = totalVisits
+	tV := resp.Rows[0].MetricValues[3].Value
+	totalVisits, err := strconv.Atoi(tV)
+	if err != nil {
+		log.Error().Msg("Error: " + err.Error())
+		return err
+	}
 
-  
-  v := resp.Rows[0].MetricValues[4].Value
-  visitors, err := strconv.Atoi(v)
-  if err != nil {
-  log.Error().Msg("Error: " + err.Error())
-  }
+	stats.TotalVisits = totalVisits
 
-  stats.Visitors = visitors
+	v := resp.Rows[0].MetricValues[4].Value
+	visitors, err := strconv.Atoi(v)
+	if err != nil {
+		log.Error().Msg("Error: " + err.Error())
+		return err
+	}
 
-  log.Info().Msg(fmt.Sprintf("%+v", stats))
+	stats.Visitors = visitors
+
+	if err := de.statsDb.SaveStats(stats); err != nil {
+		log.Error().Msg("Error: " + err.Error())
+		return err
+	}
+
 	return nil
 }
-
-
-

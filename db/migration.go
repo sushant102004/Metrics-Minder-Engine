@@ -8,7 +8,7 @@ import (
 )
 
 func AutoMigrate() {
-	err := conn.AutoMigrate(models.QuickStats{})
+	err := Conn.AutoMigrate(models.QuickStats{})
 	if err != nil {
 		log.Error().Msg("err: " + err.Error())
 		os.Exit(-1)

@@ -11,10 +11,10 @@ import (
 
 type DB struct{}
 
-var conn *gorm.DB
+var Conn *gorm.DB
 
 func ConnectToDB() {
-	if conn == nil {
+	if Conn == nil {
 		connStr := "host=localhost user=sushant password=Sushant@8813! dbname=metrics_minder port=5432 sslmode=disable TimeZone=Asia/Kolkata"
 		db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 		if err != nil {
@@ -22,7 +22,7 @@ func ConnectToDB() {
 			os.Exit(-1)
 		}
 
-		conn = db
+		Conn = db
 		log.Info().Msg("Connected to database ✅")
 	} else {
 		log.Info().Msg("Already connected to database ✅")
@@ -30,7 +30,7 @@ func ConnectToDB() {
 }
 
 func (db *DB) GetAllEmails() ([]string, error) {
-	tx := conn.Find(&models.GoogleUser{})
+	tx := Conn.Find(&models.GoogleUser{})
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -50,7 +50,7 @@ func (db *DB) GetAllEmails() ([]string, error) {
 func (db *DB) GetAccessToken(email string) (string, error) {
   user := models.GoogleUser{}
 
-  tx := conn.First(&user, "email = " + email)
+  tx := Conn.First(&user, "email = " + email)
   if tx.Error != nil {
     return "", tx.Error
   }
