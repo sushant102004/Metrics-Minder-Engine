@@ -22,12 +22,12 @@ import (
 const BASE_URL = "https://analyticsdata.googleapis.com/v1beta/properties"
 
 type DataExtracter struct {
-	statsDb db.StatsDB
+	statsDB db.StatsDB
 }
 
 func NewDataExtracter(db db.StatsDB) DataExtracter {
 	return DataExtracter{
-		statsDb: db,
+		statsDB: db,
 	}
 }
 
@@ -126,7 +126,7 @@ func (de DataExtracter) GetAndSaveQuickStats(accessToken, propertyID string) err
 
 	stats.Visitors = visitors
 
-	if err := de.statsDb.SaveStats(stats); err != nil {
+	if err := de.statsDB.SaveStats(stats); err != nil {
 		log.Error().Msg("Error: " + err.Error())
 		return err
 	}

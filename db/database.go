@@ -1,7 +1,6 @@
 package db
 
 import (
-	"metric-minder-engine/models"
 	"os"
 
 	"github.com/rs/zerolog/log"
@@ -28,39 +27,3 @@ func ConnectToDB() {
 		log.Info().Msg("Already connected to database ✅")
 	}
 }
-
-func (db *DB) GetAllEmails() ([]string, error) {
-	tx := Conn.Find(&models.GoogleUser{})
-	if tx.Error != nil {
-		return nil, tx.Error
-	}
-
-	rows, err := tx.Rows()
-	if err != nil {
-		return nil, err
-	}
-
-	if rows.Next() {
-		rows.Scan()
-	}
-
-	return nil, nil
-}
-
-func (db *DB) GetAccessToken(email string) (string, error) {
-  user := models.GoogleUser{}
-
-  tx := Conn.First(&user, "email = " + email)
-  if tx.Error != nil {
-    return "", tx.Error
-  }
-  
-  return user.AccessToken, nil
-}
-
-
-
-
-
-
-

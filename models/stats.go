@@ -1,8 +1,9 @@
 package models
 
 import (
-  "gorm.io/gorm"
-  "time"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 type QuickStats struct {
@@ -10,7 +11,7 @@ type QuickStats struct {
 	Visitors       int
 	PageViews      int
 	NewVisitors    int
-  TotalVisits    int
+	TotalVisits    int
 	PagesPerVisit  float64
 	OrganicTraffic int
 	DateRecorded   time.Time
