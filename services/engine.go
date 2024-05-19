@@ -2,6 +2,8 @@ package services
 
 import (
 	"metric-minder-engine/db"
+	logger "metric-minder-engine/log"
+	"metric-minder-engine/slack"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -21,7 +23,7 @@ func NewEngine(svc DataExtracter, db db.UsersDB) Engine {
 }
 
 func (e Engine) Start() {
-	e.StartScheduler(time.Second * 5)
+	e.StartScheduler(time.Second * 10)
 }
 
 func (e Engine) StartScheduler(interval time.Duration) {
@@ -34,17 +36,11 @@ func (e Engine) StartScheduler(interval time.Duration) {
 	select {}
 }
 
-func checkPanic(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func (e Engine) SaveStats() error {
 	emails, err := e.usersDB.GetAllEmails()
 	if err != nil {
-		// Save this to error logs
-		// notify to me.
+		log.Error().Msg("error: " + err.Error())
+		slack.SendMessage(err.Error())
 		log.Error().Msg("error: " + err.Error())
 		return err
 	}
@@ -59,12 +55,16 @@ func (e Engine) SaveStats() error {
 
 		accessToken, err := e.usersDB.GetAccessToken(email)
 		if err != nil {
+			logger.Log.SaveNewLog(err.Error())
+			slack.SendMessage(err.Error())
 			log.Error().Msg("error: " + err.Error())
 			continue
 		}
 
 		propertyID, err := e.usersDB.GetPropertyID(email)
 		if err != nil {
+			logger.Log.SaveNewLog(err.Error())
+			slack.SendMessage(err.Error())
 			log.Error().Msg("error: " + err.Error())
 			continue
 		}
@@ -73,10 +73,18 @@ func (e Engine) SaveStats() error {
 		go func(email, accessToken, propertyID string) {
 			err = e.dataExtractSvc.GetAndSaveQuickStats(accessToken, propertyID, email)
 			if err != nil {
+				logger.Log.SaveNewLog(err.Error())
+				slack.SendMessage(err.Error())
 				log.Error().Msg("error: " + err.Error())
 			}
 			<-workersChan
 		}(email, accessToken, propertyID)
 	}
 	return nil
+}
+
+func checkPanic(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
