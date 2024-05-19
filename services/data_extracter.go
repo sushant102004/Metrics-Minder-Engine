@@ -31,7 +31,7 @@ func NewDataExtracter(db db.StatsDB) DataExtracter {
 	}
 }
 
-func (de DataExtracter) GetAndSaveQuickStats(accessToken, propertyID string) error {
+func (de DataExtracter) GetAndSaveQuickStats(accessToken, propertyID, email string) error {
 	t := time.Now().String()
 	tSplit := strings.Split(t, " ")
 
@@ -125,6 +125,8 @@ func (de DataExtracter) GetAndSaveQuickStats(accessToken, propertyID string) err
 	}
 
 	stats.Visitors = visitors
+
+	stats.User = email
 
 	if err := de.statsDB.SaveStats(stats); err != nil {
 		log.Error().Msg("Error: " + err.Error())

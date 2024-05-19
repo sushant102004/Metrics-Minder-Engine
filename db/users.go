@@ -4,7 +4,6 @@ import (
 	"errors"
 	"metric-minder-engine/models"
 
-	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -33,7 +32,7 @@ func (db *UsersDB) GetAllEmails() ([]string, error) {
 func (db *UsersDB) GetAccessToken(email string) (string, error) {
 	user := models.GoogleUser{}
 
-	tx := Conn.First(&user, "email = "+email)
+	tx := Conn.Where("email = ?", email).First(&user)
 	if tx.Error != nil {
 		return "", tx.Error
 	}
@@ -43,9 +42,9 @@ func (db *UsersDB) GetAccessToken(email string) (string, error) {
 
 func (db *UsersDB) GetRefreshToken(email string) (string, error) {
 	user := models.GoogleUser{}
+
 	tx := Conn.Where("email = ?", email).First(&user)
 	if tx.Error != nil {
-		log.Error().Msg("error while fetching onboard status from db: " + tx.Error.Error())
 		return "", tx.Error
 	}
 

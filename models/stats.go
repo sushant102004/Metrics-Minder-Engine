@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -14,6 +12,5 @@ type QuickStats struct {
 	TotalVisits    int
 	PagesPerVisit  float64
 	OrganicTraffic int
-	DateRecorded   time.Time
-	TimeRecorded   time.Time `gorm:"autoCreateTime"`
+	User           string
 }
